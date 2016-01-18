@@ -193,12 +193,10 @@ sierpinski w x y l =
 
 
 --accoriding to pic layer 1 and laye 2 seems no gap??
-layerToLength layer =
-    if layer == 1
-    then smin
-    else if layer == 2
-    then smin * 3
-    else  2 ^(layer-2) +3 * layerToLength (layer - 1)
+layerToLength layer 
+    | layer == 1 =  smin
+    | layer == 2 =  smin * 3
+    | otherwise  = 2 ^(layer-2) +3 * layerToLength (layer - 1)
 
 
 sierpinskiCarpet =
