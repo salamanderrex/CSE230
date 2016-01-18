@@ -215,6 +215,8 @@ spaceClose w
            then closeWindow w
            else spaceClose w
 
+
+
 -- Note that you either need to run your program in `SOE/src` or add this
 -- path to GHC's search path via `-i/path/to/SOE/src/`.
 -- Also, the organization of SOE has changed a bit, so that now you use
@@ -224,8 +226,38 @@ spaceClose w
 --    own design.  Be creative!  The only constraint is that it shows some
 --    pattern of recursive self-similarity.
 
+--idea from http://www.toves.org/books/java/ch18-recurex/
+
 myFractal :: IO ()
-myFractal = error "Define me!"
+myFractal =
+  runGraphics (
+        do w <- openWindow "Tree" (300, 300)
+           drawTree  120  200  50 90  w
+           spaceClose w
+    )
+{-
+drawTree x y len angle w
+    | len > 2 =  do drawInWindow w (withColor Blue (line [(x, y), (x1, y1)]))
+                    drawTree x1 y1 (len * 0.75) (angle + 30) w
+                    drawTree x1 y1 (len * 0.66) (angle - 50) w
+                    where
+                        x1 = x0 + len * cos(angle)
+                        y1 = y0 - len * sin(angle)
+    | otherwise =  return()
+
+-}
+
+drawTree ::  Num a => Int -> Int -> Float -> Float -> Window -> IO ()
+drawTree x y len angle w
+    | len > 2 =  do drawInWindow w (withColor Blue (polyline  [(x, y), (x1, y1)]))
+                    drawTree x1 y1 (len * 0.75) (angle + 30.0) w
+                    drawTree x1 y1 (len * 0.66) (angle - 50.0) w
+    | otherwise =  return()
+    where
+          x1 = x + round(len * cos(angle))
+          y1 = y - round(len * sin(angle))
+-- why roud??
+--check this ...https://wiki.haskell.org/Converting_numbers
 
 -- Part 3: Recursion Etc.
 -- ----------------------
