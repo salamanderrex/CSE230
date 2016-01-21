@@ -353,7 +353,7 @@ treeSize (Branch a b) = (treeSize a) + (treeSize b)
 -- So: `height (Branch (Leaf 1) (Leaf 2))` should return `1`.
 
 treeHeight :: Tree a -> Int
-treeHeight (Leaf a)     = 1
+treeHeight (Leaf a)     = 0
 treeHeight (Branch a b) = 1 + max (treeHeight a) (treeHeight b)
 
 -- Now, a tree where the values live at the nodes not the leaf.
