@@ -19,9 +19,10 @@ import XMLTypes
 -- Tell us your name, email and student ID, by replacing the respective
 -- strings below
 
-myName  = "Qingyu Zhou"
-myEmail = "qyzhou@ucsd.edu"
-mySID   = "A53093706"
+myName  = "Zhongze Hu"
+myEmail = "myfrankhu@foxmail.com"
+mySID   = "A53102398"
+group_member = "Weiqi Zhang, Qingyu Zhou"
 
 -- Part 1: Defining and Manipulating Shapes
 -- ----------------------------------------
@@ -42,27 +43,25 @@ type Radius = Float
 type Side   = Float
 type Vertex = (Float, Float)
 
-
-
 -- 1. Below, define functions `rectangle` and `rtTriangle` as suggested
 --    at the end of Section 2.1 (Exercise 2.1). Each should return a Shape
 --    built with the Polygon constructor.
 
 rectangle :: Side -> Side -> Shape
-rectangle s1 s2 = Polygon [(0 , 0) ,(0 ,s1), (s2 ,s1), (s2 ,0) ]
+rectangle a b = Polygon [(0,0),(0,a),(b,a),(0,b)]
 
 rtTriangle :: Side -> Side -> Shape
-rtTriangle s1 s2 = Polygon [(0,0), (0,s1), (s2,0)]
+rtTriangle a b = Polygon [(0,0),(0,a),(b,0)]
 
 -- 2. Define a function
 
 sides :: Shape -> Int
 sides (Rectangle _ _)   = 4
-sides (Ellipse _ _)     = 42
 sides (RtTriangle _ _)  = 3
-sides (Polygon vertexList)
-  | length vertexList < 3 = 0
-  | otherwise             = length vertexList
+sides (Ellipse _ _)     = 42
+sides (Polygon vertices)
+  | length vertices < 3 = 0
+  | otherwise           = length vertices
 
 --   which returns the number of sides a given shape has.
 --   For the purposes of this exercise, an ellipse has 42 sides,
@@ -71,15 +70,13 @@ sides (Polygon vertexList)
 -- 3. Define a function
 
 bigger :: Shape -> Float -> Shape
-bigger (Rectangle s1 s2) e  = Rectangle (s1 * sqrt e) (s2 * sqrt e)
-bigger (RtTriangle s1 s2) e = RtTriangle (s1 * sqrt e) (s2 * sqrt e)
-bigger (Ellipse r1 r2) e    = Ellipse (r1 * sqrt e) (r2 * sqrt e)
--- cannot use two map, the inside is a tuple not a list ..., use lamnda instead
--- bigger (Polygon vertexList) e =  Polygon (map (map (*sqrt e)) vertexList)
-bigger (Polygon vertexList) e =  Polygon (map (\(x,y) -> (x* sqrt e, y* sqrt e)) vertexList)
+bigger (Rectangle a b)    e = Rectangle   (a*(sqrt e)) (b*(sqrt e))
+bigger (RtTriangle a b)   e = RtTriangle  (a*(sqrt e)) (b*(sqrt e))
+bigger (Ellipse a b)      e = Ellipse     (a*(sqrt e)) (b*(sqrt e))
+bigger (Polygon vertices) e = Polygon (map (\(a,b) -> (a*(sqrt e), b*(sqrt e))) vertices)
 
 --   that takes a shape `s` and expansion factor `e` and returns
---   a shape which is the same as (i.e., similar to in thmap (*geometric sense)
+--   a shape which is the same as (i.e., similar to in the geometric sense)
 --   `s` but whose area is `e` times the area of `s`.
 
 -- 4. The Towers of Hanoi is a puzzle where you are given three pegs,
@@ -97,10 +94,9 @@ bigger (Polygon vertexList) e =  Polygon (map (\(x,y) -> (x* sqrt e, y* sqrt e))
 --    Write a function
 
 hanoi :: Int -> String -> String -> String -> IO ()
-hanoi 0 _ _ _ = return()
-hanoi 1 a b _ = putStr ("move disc from " ++ a ++ " to " ++ b ++ "\n")
+hanoi 0 _ _ _ = putStr ""
 hanoi n a b c = do hanoi (n-1) a c b
-                   hanoi 1 a b c
+                   putStr ("move disc from " ++ a ++ " to " ++ b ++ "\n")
                    hanoi (n-1) c b a
 
 
@@ -128,51 +124,14 @@ hanoi n a b c = do hanoi (n-1) a c b
 -- Write a function `sierpinskiCarpet` that displays this figure on the
 -- screen:
 
-sierpinskiCarpet :: IO ()
--- traditional sierpinskiCarpet
-{-
-fillSquare w x y l =
-  drawInWindow w
-    (withColor Blue (polygon [(x+l, y+l), (x + 2 *l -1, y + l), (x + 2  *l -1, y + 2  *l -1 ), (x +l, y + 2  *l -1)]))
-
-smin = 2
-
-sierpinski w x y l = do let nl = l `div` 3
-                        fillSquare w x y nl
-                        if nl >= 3
-                        then do
-                          sierpinski w x y nl
-                          sierpinski w (x + nl) y nl
-                          sierpinski w (x + 2 * nl) y nl
-                          sierpinski w x (y + nl) nl
-                          sierpinski w (x + 2 * nl) (y + nl) nl
-                          sierpinski w x (y + 2 * nl) nl
-                          sierpinski w (x + nl) (y + 2 * nl) nl
-                          sierpinski w (x + 2 * nl) (y + 2 * nl) nl
-                        else
-                          return()
-
-  base = polygon [(20,20), (20,20 + 243), (20 + 243, 20 + 243),
-                 (20 + 243, 20)]
-   =
-    runGraphics (
-      do w <- openWindow "Sierpinski Carpet" (300, 300)
-         drawInWindow w (withColor Black  (base))
-         sierpinski w 20 20 243
-         spaceClose w
-      )
-
--}
-
-
--- sierpinskiCarpet  in this problem
-
+-- sierpinskiCarpet :: IO ()
+-- sierpinskiCarpet w a b l =
+--	if l == 0
 
 smin = 2
 fillSquare w x y l =
   drawInWindow w
     (withColor Blue (polygon [(x, y), (x + smin, y), (x + smin, y + smin), (x, y + smin)]))
-
 
 
 sierpinski w x y l =
@@ -191,9 +150,7 @@ sierpinski w x y l =
         nl = l -1
         offlength = layerToLength l
 
-
---accoriding to pic layer 1 and laye 2 seems no gap??
-layerToLength layer 
+layerToLength layer
     | layer == 1 =  smin
     | layer == 2 =  smin * 3
     | otherwise  = 2 ^(layer-2) +3 * layerToLength (layer - 1)
@@ -201,18 +158,11 @@ layerToLength layer
 
 sierpinskiCarpet =
   runGraphics (
-    do w <- openWindow "Sierpinski Carpet" (300, 300)
-       sierpinski w 10 10 5
-       spaceClose w
-    )
-
-spaceClose :: Window -> IO ()
-spaceClose w
-   = do k <- getKey w
-        if k==' ' || k == '\x0'
-           then closeWindow w
-           else spaceClose w
-
+  do  w <- openWindow "Sierpinski Carpet" (1000, 1000)
+      sierpinski w 10 10 5
+      k <- getKey w
+      closeWindow w
+  )
 
 
 -- Note that you either need to run your program in `SOE/src` or add this
@@ -223,28 +173,6 @@ spaceClose w
 -- 2. Write a function `myFractal` which draws a fractal pattern of your
 --    own design.  Be creative!  The only constraint is that it shows some
 --    pattern of recursive self-similarity.
-
---idea from http://www.toves.org/books/java/ch18-recurex/
-
-myFractal :: IO ()
-myFractal =
-  runGraphics (
-        do w <- openWindow "Tree" (300, 300)
-           drawTree  120  200  50 90  w
-           spaceClose w
-    )
-{-
-drawTree x y len angle w
-    | len > 2 =  do drawInWindow w (withColor Blue (line [(x, y), (x1, y1)]))
-                    drawTree x1 y1 (len * 0.75) (angle + 30) w
-                    drawTree x1 y1 (len * 0.66) (angle - 50) w
-                    where
-                        x1 = x0 + len * cos(angle)
-                        y1 = y0 - len * sin(angle)
-    | otherwise =  return()
-
--}
-
 drawTree ::  Num a => Int -> Int -> Float -> Float -> Window -> IO ()
 drawTree x y len angle w
     | len > 2 =  do drawInWindow w (withColor Blue (polyline  [(x, y), (x1, y1)]))
@@ -254,8 +182,15 @@ drawTree x y len angle w
     where
           x1 = x + round(len * cos(angle))
           y1 = y - round(len * sin(angle))
--- why roud??
---check this ...https://wiki.haskell.org/Converting_numbers
+
+myFractal :: IO ()
+myFractal =
+  runGraphics (
+        do w <- openWindow "Tree" (400, 400)
+           drawTree  200  300  100 60  w
+           k <- getKey w
+           closeWindow w
+    )
 
 -- Part 3: Recursion Etc.
 -- ----------------------
@@ -268,40 +203,40 @@ drawTree x y len angle w
 -- Write a *non-recursive* function to compute the length of a list
 
 lengthNonRecursive :: [a] -> Int
-lengthNonRecursive l = sum $ map (const 1) l
+lengthNonRecursive  l = sum $ map (\ _ -> 1) l
 
 -- `doubleEach [1,20,300,4000]` should return `[2,40,600,8000]`
 
 doubleEach :: [Int] -> [Int]
-doubleEach (x:xs) = (x * 2) : (doubleEach xs)
-doubleEach []     = []
+doubleEach [] = []
+doubleEach (x:xs) = 2*x : (doubleEach xs)
 
 -- Now write a *non-recursive* version of the above.
 
 doubleEachNonRecursive :: [Int] -> [Int]
-doubleEachNonRecursive l = map (2 * ) l
+doubleEachNonRecursive l = map (\ a -> 2*a) l
 
 -- `pairAndOne [1,20,300]` should return `[(1,2), (20,21), (300,301)]`
 
 pairAndOne :: [Int] -> [(Int, Int)]
-pairAndOne (x:xs) = (x, x+1) : pairAndOne xs  
-pairAndOne []     = []
+pairAndOne (x:xs) = (x, x+1) : (pairAndOne xs)
+
 
 -- Now write a *non-recursive* version of the above.
 
 pairAndOneNonRecursive :: [Int] -> [(Int, Int)]
-pairAndOneNonRecursive xs = map (\x -> (x, x + 1)) xs
+pairAndOneNonRecursive l = map (\ a -> (a, a+1)) l
 
 -- `addEachPair [(1,2), (20,21), (300,301)]` should return `[3,41,601]`
 
 addEachPair :: [(Int, Int)] -> [Int]
-addEachPair (x:xs) = (fst x + snd x) : addEachPair xs
-addEachPair []     = []
+addEachPair [] = []
+addEachPair (x:xs) = (fst x + snd x) : (addEachPair xs)
 
 -- Now write a *non-recursive* version of the above.
 
 addEachPairNonRecursive :: [(Int, Int)] -> [Int]
-addEachPairNonRecursive xs = map (\(a,b) -> a+b) xs
+addEachPairNonRecursive l = map (\ (a, b) -> (a + b)) l
 
 -- `minList` should return the *smallest* value in the list. You may assume the
 -- input list is *non-empty*.
@@ -310,12 +245,11 @@ minList :: [Int] -> Int
 minList (x:xs)
   |length xs == 0 = x
   |otherwise = min x (minList xs)
--- what if the list is empty?
 
 -- Now write a *non-recursive* version of the above.
 
 minListNonRecursive :: [Int] -> Int
-minListNonRecursive xs = foldl min (head xs) xs
+minListNonRecursive l = foldl min (head l) l
 
 -- `maxList` should return the *largest* value in the list. You may assume the
 -- input list is *non-empty*.
@@ -324,11 +258,10 @@ maxList :: [Int] -> Int
 maxList (x:xs)
   |length xs == 0 = x
   |otherwise = max x (maxList xs)
-
 -- Now write a *non-recursive* version of the above.
 
 maxListNonRecursive :: [Int] -> Int
-maxListNonRecursive xs = foldl max (head xs) xs
+maxListNonRecursive l = foldl max (head l) l
 
 -- Now, a few functions for this `Tree` type.
 
@@ -339,8 +272,8 @@ data Tree a = Leaf a | Branch (Tree a) (Tree a)
 -- So: `fringe (Branch (Leaf 1) (Leaf 2))` should return `[1,2]`
 
 fringe :: Tree a -> [a]
-fringe (Leaf a)     = [a]
-fringe (Branch a b) = (fringe a) ++ (fringe b)
+fringe(Leaf a) = [a]
+fringe(Branch a b) = (fringe a) ++ (fringe b)
 
 -- `treeSize` should return the number of leaves in the tree.
 -- So: `treeSize (Branch (Leaf 1) (Leaf 2))` should return `2`.
@@ -353,7 +286,7 @@ treeSize (Branch a b) = (treeSize a) + (treeSize b)
 -- So: `height (Branch (Leaf 1) (Leaf 2))` should return `1`.
 
 treeHeight :: Tree a -> Int
-treeHeight (Leaf a)     = 0
+treeHeight (Leaf a) = 0
 treeHeight (Branch a b) = 1 + max (treeHeight a) (treeHeight b)
 
 -- Now, a tree where the values live at the nodes not the leaf.
@@ -367,25 +300,24 @@ data InternalTree a = ILeaf | IBranch a (InternalTree a) (InternalTree a)
 
 takeTree :: Int -> InternalTree a -> InternalTree a
 takeTree 0 _               = ILeaf
-takeTree _ (ILeaf)         = ILeaf
-takeTree d (IBranch a b c) = IBranch a (takeTree (d-1) b) (takeTree (d-1) c)
+takeTree _ ILeaf           = ILeaf
+takeTree n (IBranch a b c) = IBranch a (takeTree (n-1) b) (takeTree (n-1) c)
 
 -- `takeTreeWhile p t` should cut of the tree at the nodes that don't satisfy `p`.
 -- So: `takeTreeWhile (< 3) (IBranch 1 (IBranch 2 ILeaf ILeaf) (IBranch 3 ILeaf ILeaf)))`
 -- should return `(IBranch 1 (IBranch 2 ILeaf ILeaf) ILeaf)`.
 
 takeTreeWhile :: (a -> Bool) -> InternalTree a -> InternalTree a
-takeTreeWhile _ (ILeaf)         = ILeaf   
+takeTreeWhile _ ILeaf = ILeaf
 takeTreeWhile p (IBranch a b c)
-  |p a = IBranch a (takeTreeWhile p b) (takeTreeWhile p c)
+  |p a       = IBranch a (takeTreeWhile p b) (takeTreeWhile p c)
   |otherwise = ILeaf
 
 -- Write the function map in terms of foldr:
 
 myMap :: (a -> b) -> [a] -> [b]
-myMap func [] = []
-myMap func xs = foldr (\y ys -> (func y):ys) [] xs
-
+myMap f [] = []
+myMap f l  = foldr (\ x xs -> f x : xs) [] l
 
 -- Part 4: Transforming XML Documents
 -- ----------------------------------
@@ -476,8 +408,27 @@ myMap func xs = foldr (\y ys -> (func y):ys) [] xs
 -- yields the HTML speciﬁed above (but with no whitespace except what's
 -- in the textual data in the original XML).
 
+formatContent :: Int -> [SimpleXML] -> [SimpleXML]
+formatContent _ []                           = []
+formatContent _ [(PCDATA content)]           = error "wrong XML"
+formatContent level ((Element tag content) : xmls)
+              |tag == "PERSONAE"             = [Element "h2" [PCDATA "Dramatis Personae"]] ++ formatContent 2 content ++ formatContent 2 xmls
+              |tag == "ACT"                  = formatContent 2 content ++ formatContent 2 xmls
+              |tag == "SCENE"                = formatContent 3 content ++ formatContent 2 xmls
+              |tag == "SPEECH"               = formatContent 3 content ++ formatContent 3 xmls
+              |tag == "SPEAKER"              = [Element "b" content] ++ [PCDATA "<br/>"] ++ formatContent 3 xmls
+              |tag == "PERSONA"              = content ++ [PCDATA "<br/>"] ++ formatContent 3 xmls
+              |tag == "LINE"                 = content ++ [PCDATA "<br/>"] ++ formatContent 3 xmls
+              |tag == "TITLE" && level == 1  = [Element "h1" content] ++ formatContent 2 xmls
+              |tag == "TITLE" && level == 2  = [Element "h2" content] ++ formatContent 2 xmls
+              |tag == "TITLE" && level == 3  = [Element "h3" content] ++ formatContent 2 xmls
+              |otherwise                     = error "wrong tag"
+
 formatPlay :: SimpleXML -> SimpleXML
-formatPlay xml = PCDATA "WRITE ME!"
+formatPlay (PCDATA _)           = error "wrong play file"
+formatPlay (Element name content)
+               | name == "PLAY" = Element "html" [Element "body" (formatContent 1 content)]
+               | otherwise      = error "wrong play file"
 
 -- The main action that we've provided below will use your function to
 -- generate a ﬁle `dream.html` from the sample play. The contents of this
