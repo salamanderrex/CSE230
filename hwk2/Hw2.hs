@@ -298,7 +298,9 @@ valueP = intP <|> boolP
 -- To do so, fill in the implementations of
 
 intP :: Parser Value
-intP = many1 digit >>= return $ IntVal $ read
+intP = do
+       x <- many1 digit
+       return $ IntVal $ read x
 
 -- Next, define a parser that will accept a
 -- particular string `s` as a given value `x`
@@ -337,10 +339,12 @@ varP = many1 upper
 -- Use the above to write a parser f-or `Expression` values
 
 variableExpr :: Parser Expression
-variableExpr = varP >>= return Var
+variableExpr = do v <- varP
+                  return $ Var v
 
 valExpr :: Parser Expression
-valExpr = valueP >>= return Val
+valExpr = do v <- valueP
+             return $ Val v
 
 parenExpr :: Parser Expression
 parenExpr = do string "("
@@ -360,7 +364,7 @@ exprOp e1 = do op <- opP
 exprP :: Parser Expression
 exprP = do e <- baseExpr
            spaces
-           exprOp e <|> return e1
+           exprOp e <|> return e
 
 -- Parsing Statements
 -- ------------------
@@ -398,13 +402,14 @@ baseStmt :: Parser Statement
 baseStmt = assignStmt <|> ifStmt <|> whileStmt <|> skipStmt
 
 seqStatement :: Statement -> Parser Statement
-seqStatement = do s <- baseStmt
-                  seqStatement s <|> return s
+seqStatement s1 = do char ';'; spaces
+                     s2 <- statementP
+                     return $ Sequence s1 s2
 
 
 statementP :: Parser Statement
-statementP = do s1 <- baseStmt
-                seqStatement s1 <|> return s1
+statementP = do s <- baseStmt
+                seqStatement s <|> return s
 
 -- When you are done, we can put the parser and evaluator together
 -- in the end-to-end interpreter function
