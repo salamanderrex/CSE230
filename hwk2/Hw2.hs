@@ -161,6 +161,15 @@ type Store = Map Variable Value
 -- First, write a function
 
 evalE :: Expression -> State Store Value
+evalE (Var x)      = do
+                       s <- get
+                       return (findWithDefault (IntVal 0) x s)
+
+evalE (Val v)      = return v
+evalE (Op o e1 e2) = do
+                       (IntVal v1) <- evalE e1
+                       (IntVal v2) <- evalE e2
+                       return (evalOp o (IntVal v1) (IntVal v2))
 
 -- that takes as input an expression and returns a world-transformer that
 -- returns a value. Yes, right now, the transformer doesnt really transform
@@ -171,13 +180,20 @@ evalE :: Expression -> State Store Value
 -- the value of the "current store" in a variable `s` use `s <- get`.
 
 evalOp :: Bop -> Value -> Value -> Value
-evalOp Plus (IntVal i) (IntVal j) = IntVal (i+j)
-
+evalOp Plus   (IntVal i) (IntVal j) = IntVal (i + j)
+evalOp Minus  (IntVal i) (IntVal j) = IntVal (i - j)
+evalOp Times  (IntVal i) (IntVal j) = IntVal (i * j)
+evalOp Divide (IntVal i) (IntVal j) = IntVal (i `div` j)
+evalOp Gt     (IntVal i) (IntVal j) = BoolVal (i > j)
+evalOp Ge     (IntVal i) (IntVal j) = BoolVal (i >= j)
+evalOp Lt     (IntVal i) (IntVal j) = BoolVal (i < j)
+evalOp Le     (IntVal i) (IntVal j) = BoolVal (i <= j)
 -- >
 
-evalE (Var x)      = error "TBD"
-evalE (Val v)      = error "TBD"
-evalE (Op o e1 e2) = error "TBD"
+
+
+
+
 
 -- Statement Evaluator
 -- -------------------
@@ -195,18 +211,37 @@ evalS :: Statement -> State Store ()
 -- Thus, to "update" the value of the store with the new store `s'`
 -- do `put s'`.
 
-evalS (Assign x e )    = error "TBD"
-evalS w@(While e s)    = error "TBD"
-evalS Skip             = error "TBD"
-evalS (Sequence s1 s2) = error "TBD"
-evalS (If e s1 s2)     = error "TBD"
+evalS (Assign x e )    = do
+                          s <- get
+                          v <- evalE e
+                          put $ insert x v s
+
+evalS w@(While e s)    = do
+                          v <- evalE e
+                          case v of
+                             IntVal  _     -> evalS Skip
+                             BoolVal False -> evalS Skip
+                             BoolVal True  -> do evalS s; evalS w
+                             -- Do statement and check while again
+
+evalS Skip             = return ()
+evalS (Sequence s1 s2) = do
+                           evalS s1
+                           evalS s2
+evalS (If e s1 s2)     =  do 
+                           v <- evalE e
+                           case v of
+                             BoolVal True  -> evalS s1
+                             BoolVal False -> evalS s2
+                             IntVal  _     -> evalS Skip
+
 
 -- In the `If` case, if `e` evaluates to a non-boolean value, just skip both
 -- the branches. (We will convert it into a type error in the next homework.)
 -- Finally, write a function
 
 execS :: Statement -> Store -> Store
-execS = error "TBD"
+execS s = execState $ evalS s
 
 -- such that `execS stmt store` returns the new `Store` that results
 -- from evaluating the command `stmt` from the world `store`.
