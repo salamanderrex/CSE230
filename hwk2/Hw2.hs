@@ -298,24 +298,31 @@ valueP = intP <|> boolP
 -- To do so, fill in the implementations of
 
 intP :: Parser Value
-intP = error "TBD"
+intP = many1 digit >>= return $ IntVal $ read
 
 -- Next, define a parser that will accept a
 -- particular string `s` as a given value `x`
 
 constP :: String -> a -> Parser a
-constP s x = error "TBD"
+constP s x = string s >> return x
 
 -- and use the above to define a parser for boolean values
 -- where `"true"` and `"false"` should be parsed appropriately.
 
 boolP :: Parser Value
-boolP = error "TBD"
+boolP = (constP "true" $ BoolVal True) <|> (constP "false" $ BoolVal False)
 
 -- Continue to use the above to parse the binary operators
 
 opP :: Parser Bop
-opP = error "TBD"
+opP =     constP "+"  Plus
+      <|> constP "-"  Minus
+      <|> constP "*"  Times
+      <|> constP "/"  Divide
+      <|> constP ">"  Gt
+      <|> constP ">=" Ge
+      <|> constP "<"  Lt
+      <|> constP "<=" Le
 
 
 -- Parsing Expressions
@@ -327,18 +334,77 @@ opP = error "TBD"
 varP :: Parser Variable
 varP = many1 upper
 
--- Use the above to write a parser for `Expression` values
+-- Use the above to write a parser f-or `Expression` values
+
+variableExpr :: Parser Expression
+variableExpr = varP >>= return Var
+
+valExpr :: Parser Expression
+valExpr = valueP >>= return Val
+
+parenExpr :: Parser Expression
+parenExpr = do string "("
+               e <- exprP
+               string ")"
+               return e
+
+baseExpr :: Parser Expression
+baseExpr = variableExpr <|> valExpr <|> parenExpr
+
+exprOp :: Expression -> Parser Expression
+exprOp e1 = do op <- opP
+               spaces
+               e2 <- exprP
+               return $ Op op e1 e2
 
 exprP :: Parser Expression
-exprP = error "TBD"
+exprP = do e <- baseExpr
+           spaces
+           exprOp e <|> return e1
 
 -- Parsing Statements
 -- ------------------
 
 -- Next, use the expression parsers to build a statement parser
 
+assignStmt :: Parser Statement
+assignStmt = do v <- varP
+                spaces; string ":="; spaces
+                e <- exprP
+                return $ Assign v e
+
+ifStmt :: Parser Statement
+ifStmt = do string "if"; spaces
+            e <- exprP
+            spaces; string "then"; spaces
+            s1 <- statementP
+            spaces; string "else"; spaces
+            s2 <- statementP
+            spaces; string "endif"
+            return $ If e s1 s2
+
+whileStmt :: Parser Statement
+whileStmt = do string "while"; spaces
+               e <- exprP
+               spaces; string "do"; spaces
+               s <- statementP
+               spaces; string "endwhile"
+               return $ While e s
+
+skipStmt :: Parser Statement
+skipStmt = string "skip" >> return Skip
+
+baseStmt :: Parser Statement
+baseStmt = assignStmt <|> ifStmt <|> whileStmt <|> skipStmt
+
+seqStatement :: Statement -> Parser Statement
+seqStatement = do s <- baseStmt
+                  seqStatement s <|> return s
+
+
 statementP :: Parser Statement
-statementP = error "TBD"
+statementP = do s1 <- baseStmt
+                seqStatement s1 <|> return s1
 
 -- When you are done, we can put the parser and evaluator together
 -- in the end-to-end interpreter function
