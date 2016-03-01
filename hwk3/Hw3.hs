@@ -710,15 +710,29 @@ prop_Adder_Correct l1 l2 =
 -- yield zero.
 
 prop_bitSubtractor_Correct ::  Signal -> [Bool] -> Bool
-prop_bitSubtractor_Correct = error "TODO"
+prop_bitSubtractor_Correct bin xs = 
+  case xs of 
+    []  -> binary (sampleN diff) == 0 
+    ys  -> binary (sampleN diff) == binary ys - binary (sample1 bin) 
+  where (diff, borrow) = bitSubtractor (bin, map lift0 xs)
 
 -- 2. Using the `bitAdder` circuit as a model, deﬁne a `bitSubtractor`
 -- circuit that implements this functionality and use QC to check that
 -- your behaves correctly.
 
-bitSubtractor :: (Signal, [Signal]) -> ([Signal], Signal)
-bitSubtractor = error "TODO"
+helper1 :: Signal -> Signal -> Signal
+helper1 s1 s2 = and2 (s1, xor2 (s1, s2))
 
+halfsub :: (Signal, Signal) -> (Signal, Signal)
+halfsub (x, y)   = (diff, borrow)
+    where diff   = xor2(x, y)
+          borrow = helper1 x y
+
+bitSubtractor :: (Signal, [Signal]) -> ([Signal], Signal)
+bitSubtractor (bin, [])   = ([], bin)
+bitSubtractor (bin, x:xs) = (helper1 diff bout:diffs, bout)
+  where (diff, b)         = halfsub (x, bin)
+        (diffs, bout)     = bitSubtractor (b, xs) 
 
 -- Problem: Multiplication
 -- -----------------------
@@ -728,7 +742,8 @@ bitSubtractor = error "TODO"
 -- width as input and outputs their product.
 
 prop_Multiplier_Correct ::  [Bool] -> [Bool] -> Bool
-prop_Multiplier_Correct = error "TODO"
+prop_Multiplier_Correct xs ys = binary (sampleN mul) == binary xs * binary ys
+  where mul = multiplier (map lift0 xs, map lift0 ys)
 
 -- 4. Deﬁne a `multiplier` circuit and check that it satisﬁes your
 -- speciﬁcation. (Looking at how adder is deﬁned will help with this,
@@ -736,7 +751,15 @@ prop_Multiplier_Correct = error "TODO"
 -- recursive structure should work, think about how to multiply two
 -- binary numbers on paper.)
 
+-- The basic idea is to simulate multiplying process on paper. 
+-- For each recursion, we multiply the left shifed (fill with low) result of the next recursion with
+-- the current digit of ys.
+
+helper2 :: Signal -> Signal -> Signal
+helper2 (Sig xs) (Sig ys) = Sig $ zipWith (\x y -> x && y) xs ys
+
 multiplier :: ([Signal], [Signal]) -> [Signal]
-multiplier = error "TODO"
+multiplier (xs, [])   = map (const low) xs
+multiplier (xs, y:ys) = adder (map (helper2 y) xs, low : multiplier (xs, ys))
 
 -- [1]: http://www.cis.upenn.edu/~bcpierce/courses/552-2008/resources/circuits.hs
