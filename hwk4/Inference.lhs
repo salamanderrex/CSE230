@@ -353,8 +353,10 @@ ti env (EFst e)       = do
 			p1 <- freshTVbl "a"
 			p2 <- freshTVbl "b"
 			s2 <- mgu  (p1 `TCom` p2) t1
-                        let s = s2 `after` s1
+                        let s = s2 `after` s1 
 			return (s, apply s p1)
+                      
+                
 ti env (ESnd e)       = do
                 	(s1,t1) <- ti env e
 			p1 <- freshTVbl "a"
@@ -366,8 +368,8 @@ ti env (ESnd e)       = do
 							
 
 ti env ENil            = do
-                           tv <- freshTVbl "a"
-                           return  (empSubst, TList tv)
+                           p <- freshTVbl "a"
+                           return  (empSubst, TList p)
                            
 ti env (e1 `ECons` e2) = do
                            (s1,t1) <- ti env e1
@@ -382,10 +384,10 @@ ti env (EDcons e)      = do (s,t) <- tiList env e
 
 ti env (ERec x e1 e2) = do  tv <- freshTVbl "a"
                             let env'  = env \\ (x, Forall [] tv)
-                            (s1, tx_out) <- ti env' e1
-                            s2 <- mgu (apply s1 tv) tx_out
+                            (s1, t1) <- ti env' e1
+                            s2 <- mgu (apply s1 tv) t1
                             let s3    = s2 `after` s1
-                                t'    = generalize (apply s3 env) (apply s3 tx_out)
+                                t'    = generalize (apply s3 env) (apply s3 t1)
                                 env'' = env \\ (x, t')
                             (s4, t2) <- ti (apply s3 env'') e2
                             return (s4 `after` s3, t2)
@@ -458,19 +460,15 @@ prExp (EAbs x e)       =   PP.char '\\' PP.<+> prEVbl x PP.<+>
                            PP.text "->" PP.<+>
                            prExp e
 prExp (e1 `ECom` e2)   =   PP.text  "(" PP.<+> prExp e1 PP.<+> PP.text ", " PP.<+> prExp e2 PP.<+>  PP.text ")"
-prExp (e1 `ECons` e2)   =   PP.text  "(" PP.<+> prExp e1 PP.<+> PP.text ", " PP.<+> prExp e2 PP.<+>  PP.text ")"
+prExp (e1 `ECons` e2)  =   PP.text  "(" PP.<+> prExp e1 PP.<+> PP.text ", " PP.<+> prExp e2 PP.<+>  PP.text ")"
 prExp (EFst e)         =   PP.text "Fst " PP.<+> prParenExp e
 prExp (ESnd e)         =   PP.text "Snd " PP.<+> prParenExp e
-prExp (ENil)             =   PP.text "Nil"
+prExp (ENil)           =   PP.text "Nil"
 prExp (EIsNil e)       =   PP.text "IsNil " PP.<+> prParenExp e
-prExp (ECons e1 e2)    =   PP.text "(" PP.<+> prExp e1 PP.<+>
-                             PP.text " :: " PP.<+> prExp e2 PP.<+>
-                             PP.text ")"
+prExp (ECons e1 e2)    =   PP.text "(" PP.<+> prExp e1 PP.<+>  PP.text " :: " PP.<+> prExp e2 PP.<+> PP.text ")"
 prExp (EDcons e)       = PP.text "EDCons " PP.<+> prParenExp e
-prExp (ERec x b body)  =   PP.text "let rec" PP.<+> 
-                              prEVbl x PP.<+> PP.text "=" PP.<+>
-                              prExp b PP.<+> PP.text "in" PP.$$
-                              PP.nest 2 (prExp body)
+prExp (ERec x b body)  =   PP.text "let rec" PP.<+>  prEVbl x PP.<+> PP.text "=" PP.<+>
+                              prExp b PP.<+> PP.text "in" PP.$$  PP.nest 2 (prExp body)
 prExp _                =   PP.text "FINAL optional"
                                                                    
 
