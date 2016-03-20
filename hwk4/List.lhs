@@ -171,9 +171,10 @@ Fix the specification for `foldr1` so that the call to `die` is
 verified by LH:
 
 \begin{code}
-{-@ foldr1 :: (a -> a -> a) -> {l:List a | size l > 0} -> a @-}
+{-@ foldr1 :: (a -> a -> a) -> {l: List a | size l > 0 } -> a @-}
 foldr1 op (x :+: xs) = foldr op x xs
 foldr1 op Emp        = die "Cannot call foldr1 with empty list"
+
 
 foldr :: (a -> b -> b) -> b -> List a -> b
 foldr _  b Emp        = b
